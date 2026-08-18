@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>PulseSync Track</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            background: transparent;
+        }
+
+        body {
+            padding: 20px;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+
+        .card {
+            width: 560px;
+            max-width: 100%;
+
+            padding: 14px;
+
+            display: flex;
+            align-items: center;
+            gap: 14px;
+
+            background: rgba(15, 15, 18, 0.94);
+            border-radius: 14px;
+
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.35);
+        }
+
+        .cover {
+            width: 80px;
+            height: 80px;
+
+            object-fit: cover;
+
+            border-radius: 10px;
+
+            background: #333;
+
+            flex-shrink: 0;
+        }
+
+        .info {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .artist {
+            font-size: 15px;
+            font-weight: bold;
+
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .title {
+            margin-top: 4px;
+
+            font-size: 21px;
+
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 8px;
+
+            margin-top: 10px;
+        }
+
+        button {
+            border: none;
+            border-radius: 8px;
+
+            padding: 8px 11px;
+
+            font-size: 13px;
+            font-weight: bold;
+
+            cursor: pointer;
+        }
+
+        .open {
+            background: white;
+            color: #111;
+        }
+
+        .copy {
+            background: #38383f;
+            color: white;
+        }
+
+        .status {
+            margin-top: 7px;
+
+            font-size: 11px;
+            color: #aaa;
+        }
+
+        .error {
+            width: 560px;
+            max-width: 100%;
+
+            padding: 20px;
+
+            background: rgba(15, 15, 18, 0.94);
+            border-radius: 14px;
+
+            color: #aaa;
+        }
+    </style>
+</head>
+
+<body>
+
+<div id="app">
+    <div class="error">
+        Загружаю трек...
+    </div>
+</div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
