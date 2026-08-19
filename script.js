@@ -1,4 +1,3 @@
-```javascript
 "use strict";
 
 let currentTrack = null;
@@ -28,15 +27,14 @@ function escapeHtml(text) {
 // ==================================================
 
 function getTrackUrl(track) {
+    const albumId =
+        track?.album_id ||
+        track?.albums?.[0]?.id;
 
-    // Сервер теперь сам формирует готовый URL.
-    if (track?.url) {
-        return track.url;
-    }
-
-    // Запасной вариант.
-    const albumId = track?.album_id;
-    const trackId = track?.track_id;
+    const trackId =
+        track?.track_id ||
+        track?.realId ||
+        track?.id;
 
     if (!albumId || !trackId) {
         return "";
@@ -56,14 +54,12 @@ function getTrackUrl(track) {
 // ==================================================
 
 function getCoverUrl(track) {
-
     if (!track?.cover) {
         return "";
     }
 
     let url = track.cover;
 
-    // Если сервер вдруг отдаст URL без протокола.
     if (
         !url.startsWith("http://") &&
         !url.startsWith("https://")
@@ -71,13 +67,10 @@ function getCoverUrl(track) {
         url = "https://" + url;
     }
 
-    // На всякий случай поддерживаем старый формат Yandex.
-    url = url.replace(
+    return url.replace(
         "%%",
         "200x200"
     );
-
-    return url;
 }
 
 
@@ -86,15 +79,13 @@ function getCoverUrl(track) {
 // ==================================================
 
 function openTrack() {
-
     if (!currentTrack?.url) {
         return;
     }
 
     window.open(
         currentTrack.url,
-        "_blank",
-        "noopener,noreferrer"
+        "_blank"
     );
 }
 
@@ -104,7 +95,6 @@ function openTrack() {
 // ==================================================
 
 async function copyTrack() {
-
     if (!currentTrack) {
         return;
     }
@@ -115,28 +105,19 @@ async function copyTrack() {
         currentTrack.title;
 
     try {
-
-        await navigator.clipboard.writeText(
-            text
-        );
-
+        await navigator.clipboard.writeText(text);
     }
     catch (error) {
-
         const textarea =
             document.createElement("textarea");
 
         textarea.value = text;
 
-        document.body.appendChild(
-            textarea
-        );
+        document.body.appendChild(textarea);
 
         textarea.select();
 
-        document.execCommand(
-            "copy"
-        );
+        document.execCommand("copy");
 
         textarea.remove();
     }
@@ -148,7 +129,6 @@ async function copyTrack() {
 // ==================================================
 
 async function updateTrack() {
-
     try {
 
         const response = await fetch(
@@ -159,19 +139,15 @@ async function updateTrack() {
             }
         );
 
-
         if (!response.ok) {
-
             throw new Error(
                 "PulseSync HTTP " +
                 response.status
             );
         }
 
-
         const data =
             await response.json();
-
 
         const track =
             data.track;
@@ -183,9 +159,7 @@ async function updateTrack() {
 
         if (!track) {
 
-            document.getElementById(
-                "app"
-            ).innerHTML = `
+            document.getElementById("app").innerHTML = `
                 <div class="error">
                     Сейчас ничего не играет
                 </div>
@@ -203,6 +177,11 @@ async function updateTrack() {
 
         const artist =
             track.artist ||
+            (track.artists || [])
+                .map(function (artist) {
+                    return artist.name;
+                })
+                .join(", ") ||
             "Неизвестный исполнитель";
 
 
@@ -220,6 +199,7 @@ async function updateTrack() {
         // ==================================================
 
         const url =
+            track.url ||
             getTrackUrl(track);
 
 
@@ -232,15 +212,12 @@ async function updateTrack() {
 
 
         // ==================================================
-        // Сохраняем текущий трек
+        // Текущий трек
         // ==================================================
 
         currentTrack = {
-
             artist: artist,
-
             title: title,
-
             url: url
         };
 
@@ -256,26 +233,18 @@ async function updateTrack() {
 
 
         // ==================================================
-        // HTML
+        // Отрисовка
         // ==================================================
 
-        document.getElementById(
-            "app"
-        ).innerHTML = `
+        document.getElementById("app").innerHTML = `
 
             <div class="card">
 
-                ${
-                    cover
-                        ? `
-                            <img
-                                class="cover"
-                                src="${escapeHtml(cover)}"
-                                alt=""
-                            >
-                        `
-                        : ""
-                }
+                <img
+                    class="cover"
+                    src="${escapeHtml(cover)}"
+                    alt=""
+                >
 
                 <div class="info">
 
@@ -292,7 +261,6 @@ async function updateTrack() {
                         <button
                             class="open"
                             id="open-button"
-                            type="button"
                         >
                             🎧 Открыть в Яндекс Музыке
                         </button>
@@ -300,7 +268,6 @@ async function updateTrack() {
                         <button
                             class="copy"
                             id="copy-button"
-                            type="button"
                         >
                             📋 Скопировать
                         </button>
@@ -318,22 +285,17 @@ async function updateTrack() {
 
 
         // ==================================================
-        // Обработчики кнопок
+        // Обработчики
         // ==================================================
 
         const openButton =
-            document.getElementById(
-                "open-button"
-            );
+            document.getElementById("open-button");
 
         const copyButton =
-            document.getElementById(
-                "copy-button"
-            );
+            document.getElementById("copy-button");
 
 
         if (openButton) {
-
             openButton.addEventListener(
                 "click",
                 openTrack
@@ -342,13 +304,11 @@ async function updateTrack() {
 
 
         if (copyButton) {
-
             copyButton.addEventListener(
                 "click",
                 copyTrack
             );
         }
-
 
     }
     catch (error) {
@@ -358,10 +318,7 @@ async function updateTrack() {
             error
         );
 
-
-        document.getElementById(
-            "app"
-        ).innerHTML = `
+        document.getElementById("app").innerHTML = `
 
             <div class="error">
 
@@ -390,4 +347,3 @@ setInterval(
     updateTrack,
     2000
 );
-```
