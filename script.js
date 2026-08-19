@@ -57,11 +57,7 @@ function getCoverUrl(track) {
         return "";
     }
 
-    return (
-        "https://ympulsesync-server.onrender.com/cover"
-        + "?v="
-        + encodeURIComponent(track.track_id || "")
-    );
+    return track.cover;
 }
 
 
@@ -77,8 +73,7 @@ function openTrack() {
 
     window.open(
         currentTrack.url,
-        "_blank",
-        "noopener,noreferrer"
+        "_blank"
     );
 }
 
@@ -138,7 +133,7 @@ async function updateTrack() {
     try {
 
         const response = await fetch(
-            "https://ympulsesync-server.onrender.com/track?v=" + Date.now(),
+            "https://ympulsesync-server.onrender.com/track",
             {
                 method: "GET",
                 cache: "no-store"
@@ -169,8 +164,6 @@ async function updateTrack() {
 
         if (!track) {
 
-            currentTrack = null;
-
             document.getElementById(
                 "app"
             ).innerHTML = `
@@ -178,6 +171,8 @@ async function updateTrack() {
                     Сейчас ничего не играет
                 </div>
             `;
+
+            currentTrack = null;
 
             return;
         }
@@ -202,7 +197,7 @@ async function updateTrack() {
 
 
         // ==================================================
-        // URL
+        // URL трека
         // ==================================================
 
         const url =
@@ -210,7 +205,7 @@ async function updateTrack() {
 
 
         // ==================================================
-        // Обложка
+        // URL обложки
         // ==================================================
 
         const cover =
@@ -255,7 +250,6 @@ async function updateTrack() {
                     class="cover"
                     src="${escapeHtml(cover)}"
                     alt=""
-                    onerror="this.style.display='none'"
                 >
 
                 <div class="info">
@@ -273,7 +267,6 @@ async function updateTrack() {
                         <button
                             class="open"
                             id="open-button"
-                            type="button"
                         >
                             🎧 Открыть в Яндекс Музыке
                         </button>
@@ -281,7 +274,6 @@ async function updateTrack() {
                         <button
                             class="copy"
                             id="copy-button"
-                            type="button"
                         >
                             📋 Скопировать
                         </button>
@@ -299,7 +291,7 @@ async function updateTrack() {
 
 
         // ==================================================
-        // Кнопки
+        // Обработчики кнопок
         // ==================================================
 
         const openButton =
@@ -330,7 +322,6 @@ async function updateTrack() {
             );
         }
 
-
     }
     catch (error) {
 
@@ -338,6 +329,7 @@ async function updateTrack() {
             "PulseSync error:",
             error
         );
+
 
         document.getElementById(
             "app"
