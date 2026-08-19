@@ -1,4 +1,3 @@
-```javascript
 "use strict";
 
 let currentTrack = null;
@@ -29,14 +28,11 @@ function escapeHtml(text) {
 
 function getTrackUrl(track) {
 
-    // Сервер теперь сам формирует готовый URL.
-    if (track?.url) {
-        return track.url;
-    }
+    const albumId =
+        track?.album_id;
 
-    // Запасной вариант.
-    const albumId = track?.album_id;
-    const trackId = track?.track_id;
+    const trackId =
+        track?.track_id;
 
     if (!albumId || !trackId) {
         return "";
@@ -61,23 +57,11 @@ function getCoverUrl(track) {
         return "";
     }
 
-    let url = track.cover;
-
-    // Если сервер вдруг отдаст URL без протокола.
-    if (
-        !url.startsWith("http://") &&
-        !url.startsWith("https://")
-    ) {
-        url = "https://" + url;
-    }
-
-    // На всякий случай поддерживаем старый формат Yandex.
-    url = url.replace(
-        "%%",
-        "200x200"
+    return (
+        "https://ympulsesync-server.onrender.com/cover"
+        + "?v="
+        + encodeURIComponent(track.track_id || "")
     );
-
-    return url;
 }
 
 
@@ -124,7 +108,9 @@ async function copyTrack() {
     catch (error) {
 
         const textarea =
-            document.createElement("textarea");
+            document.createElement(
+                "textarea"
+            );
 
         textarea.value = text;
 
@@ -152,7 +138,7 @@ async function updateTrack() {
     try {
 
         const response = await fetch(
-            "https://ympulsesync-server.onrender.com/track",
+            "https://ympulsesync-server.onrender.com/track?v=" + Date.now(),
             {
                 method: "GET",
                 cache: "no-store"
@@ -183,6 +169,8 @@ async function updateTrack() {
 
         if (!track) {
 
+            currentTrack = null;
+
             document.getElementById(
                 "app"
             ).innerHTML = `
@@ -190,8 +178,6 @@ async function updateTrack() {
                     Сейчас ничего не играет
                 </div>
             `;
-
-            currentTrack = null;
 
             return;
         }
@@ -256,7 +242,7 @@ async function updateTrack() {
 
 
         // ==================================================
-        // HTML
+        // Отрисовка
         // ==================================================
 
         document.getElementById(
@@ -265,17 +251,12 @@ async function updateTrack() {
 
             <div class="card">
 
-                ${
-                    cover
-                        ? `
-                            <img
-                                class="cover"
-                                src="${escapeHtml(cover)}"
-                                alt=""
-                            >
-                        `
-                        : ""
-                }
+                <img
+                    class="cover"
+                    src="${escapeHtml(cover)}"
+                    alt=""
+                    onerror="this.style.display='none'"
+                >
 
                 <div class="info">
 
@@ -318,7 +299,7 @@ async function updateTrack() {
 
 
         // ==================================================
-        // Обработчики кнопок
+        // Кнопки
         // ==================================================
 
         const openButton =
@@ -358,7 +339,6 @@ async function updateTrack() {
             error
         );
 
-
         document.getElementById(
             "app"
         ).innerHTML = `
@@ -390,4 +370,3 @@ setInterval(
     updateTrack,
     2000
 );
-```
