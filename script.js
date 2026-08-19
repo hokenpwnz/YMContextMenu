@@ -1,46 +1,3 @@
-Skip to content
-hokenpwnz
-YMContextMenu
-Repository navigation
-Code
-Issues
-Pull requests
-Actions
-Projects
-Security and quality
-Insights
-Settings
-Commit 88eefb4
-hokenpwnz
-hokenpwnz
-authored
-48 minutes ago
-·
-·
-Verified
-Update script.js
-main
-1 parent 
-8fb4639
- commit 
-88eefb4
-1 file changed
-
-+122
--47
-Lines changed: 122 additions & 47 deletions
-File tree
-Filter files…
-script.js
-Search within code
- 
-‎script.js‎
-+122
--47
-Lines changed: 122 additions & 47 deletions
-Original file line number	Diff line number	Diff line change
-@@ -1,3 +1,4 @@
-```javascript
 "use strict";
 let currentTrack = null;
 @@ -27,14 +28,15 @@ function escapeHtml(text) {
@@ -306,12 +263,4 @@ setInterval(
     2000
 );
 );
-```
-0 commit comments
-Comments
-0
- (0)
-Comment
-You're not receiving notifications from this thread.
-
  
