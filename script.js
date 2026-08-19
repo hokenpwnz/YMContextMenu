@@ -28,18 +28,14 @@ function escapeHtml(text) {
 
 function getTrackUrl(track) {
 
+    // Сервер теперь сам формирует готовый URL.
     if (track?.url) {
         return track.url;
     }
 
-    const albumId =
-        track?.album_id ||
-        track?.albums?.[0]?.id;
-
-    const trackId =
-        track?.track_id ||
-        track?.realId ||
-        track?.id;
+    // Запасной вариант.
+    const albumId = track?.album_id;
+    const trackId = track?.track_id;
 
     if (!albumId || !trackId) {
         return "";
@@ -66,6 +62,7 @@ function getCoverUrl(track) {
 
     let url = track.cover;
 
+    // Если сервер вдруг отдаст URL без протокола.
     if (
         !url.startsWith("http://") &&
         !url.startsWith("https://")
@@ -73,10 +70,13 @@ function getCoverUrl(track) {
         url = "https://" + url;
     }
 
-    return url.replace(
+    // На всякий случай поддерживаем старый формат Yandex.
+    url = url.replace(
         "%%",
         "200x200"
     );
+
+    return url;
 }
 
 
@@ -92,7 +92,8 @@ function openTrack() {
 
     window.open(
         currentTrack.url,
-        "_blank"
+        "_blank",
+        "noopener,noreferrer"
     );
 }
 
@@ -157,6 +158,7 @@ async function updateTrack() {
             }
         );
 
+
         if (!response.ok) {
 
             throw new Error(
@@ -165,8 +167,10 @@ async function updateTrack() {
             );
         }
 
+
         const data =
             await response.json();
+
 
         const track =
             data.track;
@@ -198,11 +202,6 @@ async function updateTrack() {
 
         const artist =
             track.artist ||
-            (track.artists || [])
-                .map(function (artist) {
-                    return artist.name;
-                })
-                .join(", ") ||
             "Неизвестный исполнитель";
 
 
@@ -236,8 +235,11 @@ async function updateTrack() {
         // ==================================================
 
         currentTrack = {
+
             artist: artist,
+
             title: title,
+
             url: url
         };
 
@@ -346,6 +348,7 @@ async function updateTrack() {
             );
         }
 
+
     }
     catch (error) {
 
@@ -353,6 +356,7 @@ async function updateTrack() {
             "PulseSync error:",
             error
         );
+
 
         document.getElementById(
             "app"
