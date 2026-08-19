@@ -131,7 +131,7 @@ async function updateTrack() {
          */
 
         const response = await fetch(
-            "http://127.0.0.1:2007/get_track",
+            "https://ympulsesync-server.onrender.com/track",
             {
                 method: "GET",
                 cache: "no-store"
