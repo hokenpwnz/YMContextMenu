@@ -1,10 +1,8 @@
 "use strict";
 
-let currentTrack = null;
+const API_URL = "https://ympulsesync-server.onrender.com/track";
 
-// ==================================================
-// Безопасный вывод текста
-// ==================================================
+let currentTrack = null;
 
 function escapeHtml(text) {
     return String(text).replace(/[&<>"']/g, function (char) {
@@ -20,34 +18,22 @@ function escapeHtml(text) {
     });
 }
 
-// ==================================================
-// Обложка
-// ==================================================
-
 function getCoverUrl(track) {
-    if (!track?.cover) {
+    if (!track || !track.cover) {
         return "";
     }
 
     let url = track.cover;
 
-    // Если адрес пришёл без протокола
-    if (
-        !url.startsWith("http://") &&
-        !url.startsWith("https://")
-    ) {
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
         url = "https://" + url;
     }
 
     return url;
 }
 
-// ==================================================
-// Открыть трек на Last.fm
-// ==================================================
-
 function openTrack() {
-    if (!currentTrack?.url) {
+    if (!currentTrack || !currentTrack.url) {
         return;
     }
 
@@ -58,53 +44,37 @@ function openTrack() {
     );
 }
 
-// ==================================================
-// Скопировать название трека
-// ==================================================
-
 async function copyTrack() {
     if (!currentTrack) {
         return;
     }
 
-    const artist = currentTrack.artist || "";
-    const title = currentTrack.title || "";
-
-    const text = artist + " — " + title;
+    const text =
+        (currentTrack.artist || "") +
+        " — " +
+        (currentTrack.title || "");
 
     try {
         await navigator.clipboard.writeText(text);
-    }
-    catch (error) {
-        // Запасной вариант для браузеров,
-        // где Clipboard API недоступен
+    } catch (error) {
         const textarea = document.createElement("textarea");
 
         textarea.value = text;
-
         document.body.appendChild(textarea);
 
         textarea.select();
-
         document.execCommand("copy");
 
         textarea.remove();
     }
 }
 
-// ==================================================
-// Получение данных PulseSync
-// ==================================================
-
 async function updateTrack() {
     try {
-        const response = await fetch(
-            "https://ympulsesync-server.onrender.com/track",
-            {
-                method: "GET",
-                cache: "no-store"
-            }
-        );
+        const response = await fetch(API_URL, {
+            method: "GET",
+            cache: "no-store"
+        });
 
         if (!response.ok) {
             throw new Error(
@@ -114,77 +84,57 @@ async function updateTrack() {
 
         const data = await response.json();
 
+        console.log(
+            "LASTFM TRACK:",
+            data.track
+                ? data.track.artist + " - " + data.track.title
+                : "none",
+            "| status:",
+            data.status,
+            "| cover:",
+            data.track && data.track.cover ? "yes" : "no"
+        );
+
         const track = data.track;
 
-        // ==================================================
-        // Ничего не играет
-        // ==================================================
-
         if (!track) {
+            currentTrack = null;
+
             document.getElementById("app").innerHTML = `
                 <div class="error">
                     Сейчас ничего не играет
                 </div>
             `;
 
-            currentTrack = null;
-
             return;
         }
 
-        // ==================================================
-        // Исполнитель
-        // ==================================================
-
         const artist =
-            track.artist ||
-            "Неизвестный исполнитель";
-
-        // ==================================================
-        // Название
-        // ==================================================
+            track.artist || "Неизвестный исполнитель";
 
         const title =
-            track.title ||
-            "Без названия";
+            track.title || "Без названия";
 
-        // ==================================================
-        // Ссылка Last.fm
-        // ==================================================
-
-        const url =
-            track.url ||
-            "";
-
-        // ==================================================
-        // Обложка Last.fm
-        // ==================================================
+        const album =
+            track.album || "";
 
         const cover =
             getCoverUrl(track);
 
-        // ==================================================
-        // Сохраняем текущий трек
-        // ==================================================
+        const url =
+            track.url || "";
 
         currentTrack = {
             artist: artist,
             title: title,
+            album: album,
             url: url
         };
-
-        // ==================================================
-        // Статус
-        // ==================================================
 
         const status =
             data.status === "playing"
                 ? "▶ Сейчас играет"
                 : "⏸ Пауза";
-
-        // ==================================================
-        // HTML
-        // ==================================================
 
         document.getElementById("app").innerHTML = `
             <div class="card">
@@ -246,10 +196,6 @@ async function updateTrack() {
             </div>
         `;
 
-        // ==================================================
-        // Обработчики кнопок
-        // ==================================================
-
         const openButton =
             document.getElementById("open-button");
 
@@ -270,9 +216,7 @@ async function updateTrack() {
             );
         }
 
-    }
-    catch (error) {
-
+    } catch (error) {
         console.error(
             "PulseSync error:",
             error
@@ -287,15 +231,7 @@ async function updateTrack() {
     }
 }
 
-// ==================================================
-// Запуск
-// ==================================================
-
 updateTrack();
-
-// ==================================================
-// Обновление каждые 2 секунды
-// ==================================================
 
 setInterval(
     updateTrack,
