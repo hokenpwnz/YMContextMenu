@@ -44,6 +44,18 @@ function openTrack() {
     );
 }
 
+function openYandexTrack() {
+    if (!currentTrack || !currentTrack.yandex_url) {
+        return;
+    }
+
+    window.open(
+        currentTrack.yandex_url,
+        "_blank",
+        "noopener,noreferrer"
+    );
+}
+
 async function copyTrack() {
     if (!currentTrack) {
         return;
@@ -124,11 +136,15 @@ async function updateTrack() {
         const url =
             track.url || "";
 
+        const yandexUrl =
+            track.yandex_url || "";
+
         currentTrack = {
             artist: artist,
             title: title,
             album: album,
-            url: url
+            url: url,
+            yandex_url: yandexUrl
         };
 
         const status =
@@ -177,6 +193,20 @@ async function updateTrack() {
                                 : ""
                         }
 
+                        ${
+                            yandexUrl
+                                ? `
+                                    <button
+                                        class="yandex"
+                                        id="yandex-button"
+                                        type="button"
+                                    >
+                                        🎵 Яндекс Музыка
+                                    </button>
+                                `
+                                : ""
+                        }
+
                         <button
                             class="copy"
                             id="copy-button"
@@ -199,6 +229,9 @@ async function updateTrack() {
         const openButton =
             document.getElementById("open-button");
 
+        const yandexButton =
+            document.getElementById("yandex-button");
+
         const copyButton =
             document.getElementById("copy-button");
 
@@ -206,6 +239,13 @@ async function updateTrack() {
             openButton.addEventListener(
                 "click",
                 openTrack
+            );
+        }
+
+        if (yandexButton) {
+            yandexButton.addEventListener(
+                "click",
+                openYandexTrack
             );
         }
 
