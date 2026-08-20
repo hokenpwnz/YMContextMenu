@@ -7,52 +7,17 @@ let currentTrack = null;
 // ==================================================
 
 function escapeHtml(text) {
-return String(text).replace(/[&<>"']/g, function (char) {
-const symbols = {
-"&": "&",
-"<": "<",
-">": ">",
-'"': """,
-"'": "'"
-};
+    return String(text).replace(/[&<>"']/g, function (char) {
+        const symbols = {
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#039;"
+        };
 
-```
-    return symbols[char];
-});
-```
-
-}
-
-// ==================================================
-// URL поиска трека в Яндекс Музыке
-// ==================================================
-
-function getTrackUrl(track) {
-
-```
-const artist =
-    track?.artist ||
-    "";
-
-const title =
-    track?.title ||
-    "";
-
-if (!title) {
-    return "";
-}
-
-const query =
-    encodeURIComponent(
-        artist + " " + title
-    );
-
-return (
-    "https://music.yandex.ru/search?text=" +
-    query
-);
-```
-
+        return symbols[char];
+    });
 }
 
 // ==================================================
@@ -60,103 +25,71 @@ return (
 // ==================================================
 
 function getCoverUrl(track) {
+    if (!track?.cover) {
+        return "";
+    }
 
-```
-if (!track?.cover) {
-    return "";
-}
+    let url = track.cover;
 
-let url = track.cover;
+    // Если адрес пришёл без протокола
+    if (
+        !url.startsWith("http://") &&
+        !url.startsWith("https://")
+    ) {
+        url = "https://" + url;
+    }
 
-// Last.fm обычно отдаёт полный URL.
-// Если вдруг пришёл адрес без протокола —
-// добавляем https://.
-if (
-    !url.startsWith("http://") &&
-    !url.startsWith("https://")
-) {
-    url = "https://" + url;
-}
-
-return url;
-```
-
+    return url;
 }
 
 // ==================================================
-// Открыть трек в Яндекс Музыке
+// Открыть трек на Last.fm
 // ==================================================
 
 function openTrack() {
+    if (!currentTrack?.url) {
+        return;
+    }
 
-```
-if (!currentTrack?.url) {
-    return;
-}
-
-window.open(
-    currentTrack.url,
-    "_blank",
-    "noopener,noreferrer"
-);
-```
-
+    window.open(
+        currentTrack.url,
+        "_blank",
+        "noopener,noreferrer"
+    );
 }
 
 // ==================================================
-// Скопировать название
+// Скопировать название трека
 // ==================================================
 
 async function copyTrack() {
+    if (!currentTrack) {
+        return;
+    }
 
-```
-if (!currentTrack) {
-    return;
-}
+    const artist = currentTrack.artist || "";
+    const title = currentTrack.title || "";
 
-const artist =
-    currentTrack.artist ||
-    "";
+    const text = artist + " — " + title;
 
-const title =
-    currentTrack.title ||
-    "";
+    try {
+        await navigator.clipboard.writeText(text);
+    }
+    catch (error) {
+        // Запасной вариант для браузеров,
+        // где Clipboard API недоступен
+        const textarea = document.createElement("textarea");
 
-const text =
-    artist +
-    " — " +
-    title;
+        textarea.value = text;
 
-try {
+        document.body.appendChild(textarea);
 
-    await navigator.clipboard.writeText(
-        text
-    );
+        textarea.select();
 
-}
-catch (error) {
+        document.execCommand("copy");
 
-    const textarea =
-        document.createElement(
-            "textarea"
-        );
-
-    textarea.value = text;
-
-    document.body.appendChild(
-        textarea
-    );
-
-    textarea.select();
-
-    document.execCommand(
-        "copy"
-    );
-
-    textarea.remove();
-}
-```
-
+        textarea.remove();
+    }
 }
 
 // ==================================================
@@ -164,12 +97,8 @@ catch (error) {
 // ==================================================
 
 async function updateTrack() {
-
-```
-try {
-
-    const response =
-        await fetch(
+    try {
+        const response = await fetch(
             "https://ympulsesync-server.onrender.com/track",
             {
                 method: "GET",
@@ -177,221 +106,185 @@ try {
             }
         );
 
+        if (!response.ok) {
+            throw new Error(
+                "PulseSync HTTP " + response.status
+            );
+        }
 
-    if (!response.ok) {
+        const data = await response.json();
 
-        throw new Error(
-            "PulseSync HTTP " +
-            response.status
-        );
-    }
+        const track = data.track;
 
+        // ==================================================
+        // Ничего не играет
+        // ==================================================
 
-    const data =
-        await response.json();
+        if (!track) {
+            document.getElementById("app").innerHTML = `
+                <div class="error">
+                    Сейчас ничего не играет
+                </div>
+            `;
 
+            currentTrack = null;
 
-    const track =
-        data.track;
+            return;
+        }
 
+        // ==================================================
+        // Исполнитель
+        // ==================================================
 
-    // ==================================================
-    // Ничего не играет
-    // ==================================================
+        const artist =
+            track.artist ||
+            "Неизвестный исполнитель";
 
-    if (!track) {
+        // ==================================================
+        // Название
+        // ==================================================
 
-        document.getElementById(
-            "app"
-        ).innerHTML = `
-            <div class="error">
-                Сейчас ничего не играет
+        const title =
+            track.title ||
+            "Без названия";
+
+        // ==================================================
+        // Ссылка Last.fm
+        // ==================================================
+
+        const url =
+            track.url ||
+            "";
+
+        // ==================================================
+        // Обложка Last.fm
+        // ==================================================
+
+        const cover =
+            getCoverUrl(track);
+
+        // ==================================================
+        // Сохраняем текущий трек
+        // ==================================================
+
+        currentTrack = {
+            artist: artist,
+            title: title,
+            url: url
+        };
+
+        // ==================================================
+        // Статус
+        // ==================================================
+
+        const status =
+            data.status === "playing"
+                ? "▶ Сейчас играет"
+                : "⏸ Пауза";
+
+        // ==================================================
+        // HTML
+        // ==================================================
+
+        document.getElementById("app").innerHTML = `
+            <div class="card">
+
+                ${
+                    cover
+                        ? `
+                            <img
+                                class="cover"
+                                src="${escapeHtml(cover)}"
+                                alt=""
+                            >
+                        `
+                        : ""
+                }
+
+                <div class="info">
+
+                    <div class="artist">
+                        ${escapeHtml(artist)}
+                    </div>
+
+                    <div class="title">
+                        ${escapeHtml(title)}
+                    </div>
+
+                    <div class="buttons">
+
+                        ${
+                            url
+                                ? `
+                                    <button
+                                        class="open"
+                                        id="open-button"
+                                        type="button"
+                                    >
+                                        🎧 Открыть на Last.fm
+                                    </button>
+                                `
+                                : ""
+                        }
+
+                        <button
+                            class="copy"
+                            id="copy-button"
+                            type="button"
+                        >
+                            📋 Скопировать
+                        </button>
+
+                    </div>
+
+                    <div class="status">
+                        ${status}
+                    </div>
+
+                </div>
+
             </div>
         `;
 
-        currentTrack = null;
+        // ==================================================
+        // Обработчики кнопок
+        // ==================================================
 
-        return;
+        const openButton =
+            document.getElementById("open-button");
+
+        const copyButton =
+            document.getElementById("copy-button");
+
+        if (openButton) {
+            openButton.addEventListener(
+                "click",
+                openTrack
+            );
+        }
+
+        if (copyButton) {
+            copyButton.addEventListener(
+                "click",
+                copyTrack
+            );
+        }
+
     }
+    catch (error) {
 
+        console.error(
+            "PulseSync error:",
+            error
+        );
 
-    // ==================================================
-    // Исполнитель
-    // ==================================================
-
-    const artist =
-        track.artist ||
-        "Неизвестный исполнитель";
-
-
-    // ==================================================
-    // Название
-    // ==================================================
-
-    const title =
-        track.title ||
-        "Без названия";
-
-
-    // ==================================================
-    // URL Яндекс Музыки
-    // ==================================================
-
-    const url =
-        getTrackUrl(track);
-
-
-    // ==================================================
-    // Обложка
-    // ==================================================
-
-    const cover =
-        getCoverUrl(track);
-
-
-    // ==================================================
-    // Сохраняем текущий трек
-    // ==================================================
-
-    currentTrack = {
-
-        artist: artist,
-
-        title: title,
-
-        url: url
-    };
-
-
-    // ==================================================
-    // Статус
-    // ==================================================
-
-    const status =
-        data.status === "playing"
-            ? "▶ Сейчас играет"
-            : "⏸ Пауза";
-
-
-    // ==================================================
-    // HTML
-    // ==================================================
-
-    document.getElementById(
-        "app"
-    ).innerHTML = `
-
-        <div class="card">
-
-            ${
-                cover
-                    ? `
-                        <img
-                            class="cover"
-                            src="${escapeHtml(cover)}"
-                            alt=""
-                        >
-                    `
-                    : ""
-            }
-
-            <div class="info">
-
-                <div class="artist">
-                    ${escapeHtml(artist)}
-                </div>
-
-                <div class="title">
-                    ${escapeHtml(title)}
-                </div>
-
-                <div class="buttons">
-
-                    <button
-                        class="open"
-                        id="open-button"
-                        type="button"
-                    >
-                        🎧 Открыть в Яндекс Музыке
-                    </button>
-
-                    <button
-                        class="copy"
-                        id="copy-button"
-                        type="button"
-                    >
-                        📋 Скопировать
-                    </button>
-
-                </div>
-
-                <div class="status">
-                    ${status}
-                </div>
-
+        document.getElementById("app").innerHTML = `
+            <div class="error">
+                ❌ Не удалось получить данные
+                от PulseSync
             </div>
-
-        </div>
-    `;
-
-
-    // ==================================================
-    // Обработчики кнопок
-    // ==================================================
-
-    const openButton =
-        document.getElementById(
-            "open-button"
-        );
-
-    const copyButton =
-        document.getElementById(
-            "copy-button"
-        );
-
-
-    if (openButton) {
-
-        openButton.addEventListener(
-            "click",
-            openTrack
-        );
+        `;
     }
-
-
-    if (copyButton) {
-
-        copyButton.addEventListener(
-            "click",
-            copyTrack
-        );
-    }
-
-
-}
-catch (error) {
-
-    console.error(
-        "PulseSync error:",
-        error
-    );
-
-
-    document.getElementById(
-        "app"
-    ).innerHTML = `
-
-        <div class="error">
-
-            ❌ Не удалось получить данные
-            от PulseSync
-
-        </div>
-
-    `;
-}
-```
-
 }
 
 // ==================================================
@@ -405,6 +298,6 @@ updateTrack();
 // ==================================================
 
 setInterval(
-updateTrack,
-2000
+    updateTrack,
+    2000
 );
